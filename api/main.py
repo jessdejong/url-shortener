@@ -1,18 +1,42 @@
-from flask import Flask
-from db import fetch_times, store_time
-import datetime
+from flask import Flask, request, redirect
+from db import fetch_urls, add_short_url_to_db, get_original_url, increment_visit_count
+import hashlib
+import base64
 
 app = Flask(__name__)
 
-@app.route('/api/time')
+@app.route('/api/urls')
 def get_current_time():
-    # Store the current access time in Datastore.
-    store_time(datetime.datetime.now(tz=datetime.timezone.utc))
+    # Fetch the 10 most recently shortened URLs.
+    shortened_urls = fetch_urls(10)
 
-    # Fetch the most recent 10 access times from Datastore.
-    times = fetch_times(10)
+    return {'urls': list(shortened_urls)}
 
-    return {'time': datetime.datetime.now(), 'times': list(times)}
+
+@app.route('/api/shorten', methods = ['POST'])
+def shorten_url():
+    url_bytes = request.form['url_to_shorten'].encode("utf-8")
+    hash = request.form.get('custom_hash')
+    # hash = request.form['custom_hash']
+
+    if hash is None:
+        hash = base64.urlsafe_b64encode(hashlib.sha256(url_bytes).digest())[:5].decode("ascii")
+
+    add_short_url_to_db(url_bytes.decode("ascii"), hash)
+
+    return redirect('/')
+
+
+@app.route('/api/redirect', methods = ['GET'])
+def visit():
+    hash = request.args.get('hash')
+    original_url = get_original_url(hash)
+    # print(original_url)
+    if (original_url is not None):
+        increment_visit_count(original_url)
+        return {'original_url': original_url}
+    else:
+        return {'original_url': ''}
 
 
 if __name__ == '__main__':
