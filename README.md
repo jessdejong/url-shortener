@@ -17,6 +17,8 @@ Starting the frontend server for local development.
 
 To create a production ready build, use 'npm run build'.
 
+Follow the steps found here: [Building a Python 3 App on App Engine](https://cloud.google.com/appengine/docs/standard/python3/building-app)
+
 The web application is intended to be deployed on a [Google App Engine](https://cloud.google.com/appengine) instance. You can start the application using the following command.
 
 ```bash
